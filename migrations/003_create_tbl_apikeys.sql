@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS tbl_apikeys (
+    id SERIAL PRIMARY KEY,
+    key TEXT UNIQUE NOT NULL,
+    name VARCHAR(100),
+    access_scope TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
