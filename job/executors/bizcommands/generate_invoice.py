@@ -1,4 +1,5 @@
-from job_module.executors.bizcommands.command_base import Command
+from job.executors.bizcommands.command_base import Command
+
 
 class GenerateInvoiceCommand(Command):
     def run(self):
@@ -7,8 +8,6 @@ class GenerateInvoiceCommand(Command):
 
         if not client_id or not amount:
             raise ValueError("Missing 'client_id' or 'amount' in payload")
-
-        print(f"[generate_invoice] Generating invoice for client: {client_id} with amount: {amount}")
 
         return {
             "message": f"Invoice of ${amount} generated for client {client_id}",

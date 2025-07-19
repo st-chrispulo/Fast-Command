@@ -7,7 +7,7 @@ from datetime import datetime
 Base = declarative_base()
 
 class JobRun(Base):
-    __tablename__ = 'tlb_job_runs'
+    __tablename__ = 'tbl_job_runs'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     job_id = Column(UUID(as_uuid=True), nullable=False)

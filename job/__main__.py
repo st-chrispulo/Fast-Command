@@ -1,9 +1,10 @@
 import os
-import time
+import argparse
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from job.executors.queue_executor import queue_executor_loop
+from job.executors.scheduler_executor import scheduler_executor_loop
 
 
 def build_db_session():
@@ -18,10 +19,6 @@ def build_db_session():
     db_url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
     engine = create_engine(db_url, pool_pre_ping=True)
     return sessionmaker(bind=engine)
-
-
-import argparse
-from job.executors.scheduler_executor import scheduler_executor_loop
 
 
 def main():

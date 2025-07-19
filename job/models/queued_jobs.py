@@ -8,7 +8,7 @@ Base = declarative_base()
 
 
 class QueuedJob(Base):
-    __tablename__ = 'tlb_queued_jobs'
+    __tablename__ = 'tbl_queued_jobs'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     command = Column(Text, nullable=False)
