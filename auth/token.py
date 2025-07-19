@@ -38,3 +38,20 @@ def verify_token(token: str):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def get_token_payload(token: str) -> dict:
+    payload = None
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": False}
+        )
+        return payload
+    except jwt.InvalidTokenError:
+        payload = payload
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return payload

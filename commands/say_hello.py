@@ -9,6 +9,7 @@ class SayHelloPayload(BaseModel):
 class SayHelloCommand(BaseCommand):
     name = "say_hello"
     schema = SayHelloPayload
+    require_auth = True
 
     def run(self, payload: SayHelloPayload) -> dict:
         return {"message": f"Hello, {payload.name}!"}

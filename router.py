@@ -18,22 +18,34 @@ def get_user_id(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)
 for command in command_registry:
     schema = command.schema
     endpoint_name = command.name
+    http_method = command.method.upper()
+
 
     def generate_endpoint(cmd):
-        async def endpoint(
-            payload: cmd.schema,
-            user_id: str = Depends(get_user_id) if cmd.require_auth else None
-        ):
-            if cmd.require_auth and hasattr(payload, "user_id"):
-                setattr(payload, "user_id", user_id)
+        if cmd.require_auth:
+            if cmd.schema is None:
+                async def endpoint(user_id: str = Depends(get_user_id)):
+                    return cmd.execute({"user_id": user_id})
+            else:
+                async def endpoint(payload: cmd.schema, user_id: str = Depends(get_user_id)):
+                    if hasattr(payload, "user_id"):
+                        setattr(payload, "user_id", user_id)
+                    return cmd.execute(payload)
+        else:
+            if cmd.schema is None:
+                async def endpoint():
+                    return cmd.execute(None)
+            else:
+                async def endpoint(payload: cmd.schema):
+                    return cmd.execute(payload)
 
-            return cmd.execute(payload)
         return endpoint
+
 
     route_kwargs = {
         "path": f"/{endpoint_name}",
         "endpoint": generate_endpoint(command),
-        "methods": ["POST"],
+        "methods": [http_method],
         "name": endpoint_name,
         "summary": f"{endpoint_name} Command",
         "response_model": dict,
