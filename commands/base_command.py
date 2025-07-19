@@ -1,11 +1,13 @@
+from typing import Optional, Type
 from pydantic import BaseModel
 from auth.guard import check_permission
 
 
 class BaseCommand:
     name: str
-    schema: type[BaseModel]
+    schema: Optional[Type[BaseModel]] = None
     require_auth: bool = True
+    method = 'POST'
 
     def run(self, payload: BaseModel) -> dict:
         raise NotImplementedError
