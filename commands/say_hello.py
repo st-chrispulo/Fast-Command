@@ -1,14 +1,14 @@
+from commands.base_command import BaseCommand
 from pydantic import BaseModel
-from commands.base import BaseCommand
 
 
-class SayHelloSchema(BaseModel):
+class SayHelloPayload(BaseModel):
     name: str
 
 
 class SayHelloCommand(BaseCommand):
     name = "say_hello"
-    schema = SayHelloSchema
+    schema = SayHelloPayload
 
-    def execute(self, payload: SayHelloSchema) -> dict:
+    def run(self, payload: SayHelloPayload) -> dict:
         return {"message": f"Hello, {payload.name}!"}

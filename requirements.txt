@@ -6,3 +6,5 @@ python-dotenv==1.0.1
 loguru==0.7.2
 pydantic[email]==2.6.4
 email-validator==2.1.1
+
+sqlalchemy~=2.0.41

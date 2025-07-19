@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Dict
-from commands.base import BaseCommand
+from commands.base_command import BaseCommand
 
 
 class GroupOwner(BaseModel):
