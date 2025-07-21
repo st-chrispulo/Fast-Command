@@ -2,8 +2,6 @@ import time
 from datetime import datetime, timedelta, timezone
 from croniter import croniter
 from sqlalchemy.orm import Session
-from sqlalchemy import select
-from sqlalchemy.orm import aliased
 
 from logger import logger
 from job.models.scheduled_jobs import ScheduledJob

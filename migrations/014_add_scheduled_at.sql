@@ -1,0 +1,2 @@
+ALTER TABLE tbl_queued_jobs
+ADD COLUMN scheduled_at TIMESTAMP WITH TIME ZONE;

@@ -28,10 +28,14 @@ def queue_executor_loop(db_session_factory):
 
 
 def fetch_next_queued_job(session: Session):
+    now = datetime.now(timezone.utc)
     return (
         session.query(QueuedJob)
-        .filter(QueuedJob.status == "queued")
-        .order_by(QueuedJob.created_at.asc())
+        .filter(
+            QueuedJob.status == "queued",
+            (QueuedJob.scheduled_at == None) | (QueuedJob.scheduled_at <= now)
+        )
+        .order_by(QueuedJob.scheduled_at.nullsfirst(), QueuedJob.created_at.asc())
         .with_for_update(skip_locked=True)
         .first()
     )
