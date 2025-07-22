@@ -2,11 +2,10 @@ import time
 from datetime import datetime, timedelta, timezone
 from croniter import croniter
 from sqlalchemy.orm import Session
-
-from logger import logger
 from job.models.scheduled_jobs import ScheduledJob
 from job.models.job_runs import JobRun
 from job.executors.base_executor import BaseExecutor
+from logger import logger
 
 POLL_INTERVAL_SECONDS = 10
 SCHEDULE_REFRESH_INTERVAL_SECONDS = 60
