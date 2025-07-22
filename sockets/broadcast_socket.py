@@ -1,7 +1,7 @@
 from sockets.base_socket import BaseSocket
 
 
-class ProgressSocket(BaseSocket):
+class BroadcastSocket(BaseSocket):
     def __init__(self):
         super().__init__()
         self.room_name = "broadcast"

@@ -5,6 +5,8 @@ from fastapi import WebSocket, WebSocketDisconnect
 from auth.token import verify_token
 from logger import logger
 from sockets.socket_registry import socket_registry
+from sockets.room_state import get_sockets_in_room
+
 
 router = APIRouter()
 auth_scheme = HTTPBearer()
@@ -63,6 +65,18 @@ for command in command_registry:
 for room_name, socket_handler in socket_registry.items():
     route_path = f"/ws/{room_name}"
 
+    def make_emit(room):
+        async def emit(payload: dict):
+            for ws in get_sockets_in_room(room):
+                try:
+                    await ws.send_json(payload)
+                except Exception:
+                    pass
+        return emit
+
+    socket_handler.emit = make_emit(room_name)
+
+    # ✅ Define endpoint using bound handler
     async def websocket_endpoint(websocket: WebSocket, room=room_name, handler=socket_handler):
         token = websocket.query_params.get("token")
         if not token:
@@ -78,18 +92,23 @@ for room_name, socket_handler in socket_registry.items():
                 return
 
             await websocket.accept()
-            handler.on_connect(websocket, user)
+            from sockets.room_state import add_socket_to_room, remove_socket_from_room
+            add_socket_to_room(room, websocket)
+
+            await handler.on_connect(websocket, user)
 
             while True:
                 raw = await websocket.receive_json()
-                handler.on_message(raw, websocket, user)
+                await handler.on_message(raw, websocket, user)
 
         except WebSocketDisconnect:
-            print(f"[WebSocket:{room}] disconnected")
+            logger.info(f"[WebSocket:{room}] disconnected")
         except Exception as e:
-            print(f"[WebSocket:{room}] error:", e)
+            logger.info(f"[WebSocket:{room}] error:", e)
             await websocket.close(code=1008)
         finally:
-            handler.on_disconnect(websocket)
+            from sockets.room_state import remove_socket_from_room
+            remove_socket_from_room(room, websocket)
+            await handler.on_disconnect(websocket)
 
-    router.add_api_websocket_route(route_path, websocket_endpoint, name=f"{room_name}")
+    router.add_api_websocket_route(route_path, websocket_endpoint, name=room_name)
