@@ -4,25 +4,26 @@ from job.models.queued_jobs import QueuedJob
 from job.models.job_runs import JobRun
 from job.executors.bizcommands import command_registry
 from sqlalchemy.orm import Session
+from logger import logger
 
 
 POLL_INTERVAL_SECONDS = 5
 
 
 def queue_executor_loop(db_session_factory):
-    print("[QueueExecutor] Started queue polling loop")
+    logger.info("[QueueExecutor] Started queue polling loop")
     while True:
         try:
             with db_session_factory() as session:
                 job = fetch_next_queued_job(session)
                 if job:
-                    print(f"[QueueExecutor] Executing job {job.id} -> {job.command}")
+                    logger.info(f"[QueueExecutor] Executing job {job.id} -> {job.command}")
                     run_id = process_job(job, session)
-                    print(f"[QueueExecutor] Finished job {job.id}, logged run {run_id}")
+                    logger.info(f"[QueueExecutor] Finished job {job.id}, logged run {run_id}")
                 else:
                     time.sleep(POLL_INTERVAL_SECONDS)
         except Exception as e:
-            print(f"[QueueExecutor] Error in loop: {str(e)}")
+            logger.info(f"[QueueExecutor] Error in loop: {str(e)}")
             time.sleep(POLL_INTERVAL_SECONDS)
 
 

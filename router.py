@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from invoker import command_registry
+from fastapi import WebSocket, WebSocketDisconnect
 from auth.token import verify_token
+from logger import logger
+from sockets.socket_registry import socket_registry
 
 router = APIRouter()
 auth_scheme = HTTPBearer()
@@ -55,3 +58,38 @@ for command in command_registry:
         route_kwargs["openapi_extra"] = {"security": []}
 
     router.add_api_route(**route_kwargs)
+
+
+for room_name, socket_handler in socket_registry.items():
+    route_path = f"/ws/{room_name}"
+
+    async def websocket_endpoint(websocket: WebSocket, room=room_name, handler=socket_handler):
+        token = websocket.query_params.get("token")
+        if not token:
+            await websocket.close(code=1008)
+            return
+
+        try:
+            payload = verify_token(token)
+            user = {"user_id": payload.get("user_id")}
+
+            if not handler.authorize(websocket, user):
+                await websocket.close(code=1008)
+                return
+
+            await websocket.accept()
+            handler.on_connect(websocket, user)
+
+            while True:
+                raw = await websocket.receive_json()
+                handler.on_message(raw, websocket, user)
+
+        except WebSocketDisconnect:
+            print(f"[WebSocket:{room}] disconnected")
+        except Exception as e:
+            print(f"[WebSocket:{room}] error:", e)
+            await websocket.close(code=1008)
+        finally:
+            handler.on_disconnect(websocket)
+
+    router.add_api_websocket_route(route_path, websocket_endpoint, name=f"{room_name}")

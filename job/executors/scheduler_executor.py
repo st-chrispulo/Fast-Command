@@ -5,24 +5,25 @@ from job.models.scheduled_jobs import ScheduledJob
 from job.models.job_runs import JobRun
 from job.executors.base_executor import execute_job
 from sqlalchemy.orm import Session
+from logger import logger
 
 POLL_INTERVAL_SECONDS = 10
 
 
 def scheduler_executor_loop(db_session_factory):
-    print("[SchedulerExecutor] Started scheduler polling loop")
+    logger.info("[SchedulerExecutor] Started scheduler polling loop")
     while True:
         try:
             with db_session_factory() as session:
                 job = fetch_next_scheduled_job(session)
                 if job:
-                    print(f"[SchedulerExecutor] Executing job {job.id} -> {job.command}")
+                    logger.info(f"[SchedulerExecutor] Executing job {job.id} -> {job.command}")
                     run_id = process_scheduled_job(job, session)
-                    print(f"[SchedulerExecutor] Finished job {job.id}, logged run {run_id}")
+                    logger.info(f"[SchedulerExecutor] Finished job {job.id}, logged run {run_id}")
                 else:
                     time.sleep(POLL_INTERVAL_SECONDS)
         except Exception as e:
-            print(f"[SchedulerExecutor] Error in loop: {str(e)}")
+            logger.info(f"[SchedulerExecutor] Error in loop: {str(e)}")
             time.sleep(POLL_INTERVAL_SECONDS)
 
 
