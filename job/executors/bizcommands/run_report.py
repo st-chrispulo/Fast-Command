@@ -3,14 +3,12 @@ from job.executors.bizcommands.command_base import Command
 
 class RunReportCommand(Command):
     def run(self):
-        org_id = self.payload.get("org_id")
-        if not org_id:
-            raise ValueError("Missing 'org_id' in payload")
-
-        print(f"[run_report] Generating report for org_id: {org_id}")
+        client_id = self.payload.get("client_id")
+        if not client_id:
+            raise ValueError("Missing 'client_id' in payload")
 
         return {
-            "message": f"Report generated for org_id {org_id}",
+            "message": f"Report generated for client_id {client_id}",
             "report_id": "rpt-1234",
             "timestamp": "2025-07-19T10:00:00Z"
         }
