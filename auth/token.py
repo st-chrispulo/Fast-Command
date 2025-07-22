@@ -55,3 +55,11 @@ def get_token_payload(token: str) -> dict:
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload
+
+
+# temporary integration
+def create_system_token(days_valid=365):
+    return create_access_token({
+        "user_id": "system",
+        "role": "internal"
+    }, expires_delta=timedelta(days=days_valid))

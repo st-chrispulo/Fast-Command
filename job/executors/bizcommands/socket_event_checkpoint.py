@@ -10,21 +10,23 @@ class SocketEventCheckpointCommand(Command):
         from auth.db import SessionLocal
         db: Session = SessionLocal()
 
-        saved = 0
+        entries = []
+
         try:
             while not socket_event_queue.empty():
                 event = socket_event_queue.get_nowait()
 
-                log_entry = SocketEventLog(
+                entries.append(SocketEventLog(
                     room=event["room"],
                     event_type=event["event_type"],
                     data=event["data"],
                     timestamp=datetime.utcfromtimestamp(event["timestamp"])
-                )
-                db.add(log_entry)
-                saved += 1
+                ))
 
-            db.commit()
+            if entries:
+                db.bulk_save_objects(entries)
+                db.commit()
+
         except Exception as e:
             db.rollback()
             raise e
@@ -32,6 +34,6 @@ class SocketEventCheckpointCommand(Command):
             db.close()
 
         return {
-            "message": f"Saved {saved} socket events",
+            "message": f"Saved {len(entries)} socket events",
             "timestamp": datetime.utcnow().isoformat()
         }
