@@ -6,6 +6,7 @@ from auth.token import verify_token
 from logger import logger
 from sockets.socket_registry import socket_registry
 from sockets.room_state import get_sockets_in_room
+from fastapi.responses import JSONResponse
 
 
 router = APIRouter()
@@ -76,7 +77,6 @@ for room_name, socket_handler in socket_registry.items():
 
     socket_handler.emit = make_emit(room_name)
 
-    # ✅ Define endpoint using bound handler
     async def websocket_endpoint(websocket: WebSocket, room=room_name, handler=socket_handler):
         token = websocket.query_params.get("token")
         if not token:
@@ -112,3 +112,19 @@ for room_name, socket_handler in socket_registry.items():
             await handler.on_disconnect(websocket)
 
     router.add_api_websocket_route(route_path, websocket_endpoint, name=room_name)
+
+
+@router.get("/ws/progress-docs", tags=["WebSocket"])
+def websocket_docs():
+    return JSONResponse({
+        "info": "WebSocket Endpoint: ws://localhost:8000/ws/progress",
+        "auth": "Use Bearer token as ?token=...",
+        "room": "Use path param to join (e.g., /ws/{room})",
+        "example": "ws://localhost:8000/ws/progress?token=eyJhbGciOiJIUzI1Ni...",
+        "message_format": {
+            "job_id": "string",
+            "status": "processing|done|error",
+            "message": "string",
+            "percent": "int (optional)"
+        }
+    })
