@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Text, JSON, DateTime, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 Base = declarative_base()
 
@@ -18,5 +18,8 @@ class QueuedJob(Base):
     result = Column(JSON)
     error_message = Column(Text)
     attempts = Column(Integer, default=0)
+
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
