@@ -4,4 +4,4 @@ CREATE TABLE tbl_socket_event_log (
     event_type TEXT,
     data JSONB,
     timestamp TIMESTAMP NOT NULL
-) PARTITION BY RANGE (timestamp);
+);
