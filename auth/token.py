@@ -57,7 +57,6 @@ def get_token_payload(token: str) -> dict:
     return payload
 
 
-# temporary integration
 def create_system_token(days_valid=365):
     return create_access_token({
         "user_id": "system",

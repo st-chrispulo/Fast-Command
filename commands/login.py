@@ -1,16 +1,33 @@
 from commands.base_command import BaseCommand
-from pydantic import BaseModel
 from auth.db import SessionLocal
 from auth.token import create_access_token, create_refresh_token, REFRESH_TOKEN_EXPIRE_DAYS, TOKEN_EXPIRE_MINUTES
 from passlib.hash import bcrypt
 from fastapi import HTTPException
 from sqlalchemy import text
 from datetime import datetime, timedelta
+from pydantic import BaseModel, field_validator
 
 
 class LoginPayload(BaseModel):
     email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Email must not be empty")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Password must not be empty")
+        return v
+
 
 
 class LoginCommand(BaseCommand):

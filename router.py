@@ -1,16 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from invoker import command_registry
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect, Form, File, UploadFile, Depends
 from auth.token import verify_token
 from logger import logger
 from sockets.socket_registry import socket_registry
 from sockets.room_state import get_sockets_in_room
 from fastapi.responses import JSONResponse
+from inspect import signature, Parameter
+from typing import get_type_hints, List
+import inspect
+from utils.refresh_available_commands import sync_command_registry_to_db
 
 
 router = APIRouter()
 auth_scheme = HTTPBearer()
+
+sync_command_registry_to_db(command_registry=command_registry)
+
+
+async def maybe_await(func, *args, **kwargs):
+    result = func(*args, **kwargs)
+    if inspect.isawaitable(result):
+        return await result
+    return result
 
 
 def get_user_id(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
@@ -21,6 +34,48 @@ def get_user_id(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)
     return user_id
 
 
+def build_file_upload_endpoint(cmd):
+    schema_fields = cmd.schema.model_fields if cmd.schema else {}
+    hints = get_type_hints(cmd.schema)
+    is_multi = getattr(cmd, "multi_file", False)
+
+    async def endpoint_template(**kwargs):
+        payload_fields = {k: v for k, v in kwargs.items() if k in schema_fields}
+        file_or_files = kwargs.get("files" if is_multi else "file")
+        user_id = kwargs.get("user_id") if "user_id" in kwargs else None
+        if cmd.require_auth and user_id is None:
+            raise HTTPException(status_code=401, detail="Authentication required")
+
+        payload = cmd.schema(**payload_fields) if cmd.schema else None
+
+        if cmd.require_auth:
+            return await cmd.execute(payload, file_or_files, user_id)
+        else:
+            return await cmd.execute(payload, file_or_files)
+
+    params = []
+
+    for field_name, field in schema_fields.items():
+        field_type = hints[field_name]
+        default = Form(...) if field.is_required() else Form(field.default)
+        params.append(
+            Parameter(field_name, Parameter.POSITIONAL_OR_KEYWORD, default=default, annotation=field_type)
+        )
+
+    if is_multi:
+        params.append(Parameter("files", Parameter.POSITIONAL_OR_KEYWORD, default=File(...), annotation=List[UploadFile]))
+    else:
+        params.append(Parameter("file", Parameter.POSITIONAL_OR_KEYWORD, default=File(...), annotation=UploadFile))
+
+    if cmd.require_auth:
+        params.append(
+            Parameter("user_id", Parameter.POSITIONAL_OR_KEYWORD, default=Depends(get_user_id), annotation=str)
+        )
+
+    endpoint_template.__signature__ = signature(endpoint_template).replace(parameters=params)
+    return endpoint_template
+
+
 for command in command_registry:
     schema = command.schema
     endpoint_name = command.name
@@ -28,6 +83,8 @@ for command in command_registry:
 
 
     def generate_endpoint(cmd):
+        if cmd.type == "file_upload":
+            return build_file_upload_endpoint(cmd)
         if cmd.require_auth:
             if cmd.schema is None:
                 async def endpoint(user_id: str = Depends(get_user_id)):
@@ -36,7 +93,7 @@ for command in command_registry:
                 async def endpoint(payload: cmd.schema, user_id: str = Depends(get_user_id)):
                     if hasattr(payload, "user_id"):
                         setattr(payload, "user_id", user_id)
-                    return cmd.execute(payload)
+                    return await maybe_await(cmd.execute, payload, user_id=user_id)
         else:
             if cmd.schema is None:
                 async def endpoint():

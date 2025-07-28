@@ -1,13 +1,20 @@
-from commands import SayHelloCommand, CreateUserGroupCommand, LoginCommand, CreateUserCommand, LogoutCommand, \
-    RefreshTokenCommand, MeCommand
+from commands import SayHelloCommand, LoginCommand, CreateUserCommand, LogoutCommand, \
+    RefreshTokenCommand, MeCommand, UploadUserAvatarCommand, GenerateSecureDownloadLinkCommand, AddRoleCommand, \
+    AssignRoleToUserCommand, GetCommandNamesCommand, SyncPermissionCommand
 
 command_registry = [
     CreateUserCommand(),
     LoginCommand(),
     SayHelloCommand(),
-    CreateUserGroupCommand(),
     RefreshTokenCommand(),
     LogoutCommand(),
-    MeCommand()
-
+    MeCommand(),
+    UploadUserAvatarCommand(),
+    GenerateSecureDownloadLinkCommand(),
+    AddRoleCommand(),
+    AssignRoleToUserCommand(),
+    GetCommandNamesCommand(),
+    SyncPermissionCommand()
 ]
+
+
