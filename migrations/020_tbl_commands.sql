@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS tbl_commands (
+  name TEXT PRIMARY KEY,
+  require_auth BOOLEAN DEFAULT TRUE,
+  method TEXT DEFAULT 'POST',
+  created_at TIMESTAMP DEFAULT NOW()
+);
